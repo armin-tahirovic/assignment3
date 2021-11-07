@@ -1,17 +1,28 @@
-import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import * as serviceWorker from './serviceWorker.js';
+import model from './model.js'
+import view from './view.js'
+import store from './store.js'
+import dispatcher from './dispatcher.js'
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+async function init() {
+  try {
+    const weather_res = await fetch('http://localhost:8080/data')
+    const weather = await weather_res.json()
+    const forecast = await fetch('http://localhost:8080/forecast').then(res => res.json())
+    const theModel = model(weather, forecast)
+    let renderer = dom => ReactDOM.render(dom, document.getElementById('root'))
+    let theDispatcher
+    const theView = view(() => theDispatcher)
+    const theStore = store(theModel, theView, renderer)
+    theDispatcher = dispatcher(theStore)
+    renderer(theView(theModel))
+  } catch (err) {
+    console.log(err)
+  }
+}
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+init()
+
+serviceWorker.unregister();
